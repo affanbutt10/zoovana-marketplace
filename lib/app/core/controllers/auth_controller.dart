@@ -90,8 +90,11 @@ class AuthController extends GetxController {
         '[AuthController] loginWithGoogle — cancelled or misconfigured: ${err.message}',
       );
       isLoading = false;
-      error =
-          'Google sign-in could not complete. Please check the Android OAuth client package name and SHA fingerprints, then try again.';
+      if (err.message?.contains('Cancelled by user') == true) {
+        error = 'Google sign-in was cancelled.';
+      } else {
+        error = 'Google sign-in could not complete. Error: ${err.message}. (If you see [16] Account reauth failed, check your SHA fingerprints).';
+      }
       update();
       return false;
     } catch (err) {

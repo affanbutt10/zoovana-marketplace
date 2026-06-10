@@ -155,25 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: AppSpacing.md),
               _buildDivider(),
               const SizedBox(height: AppSpacing.md),
-              _buildGoogleButton(
-                isLoading: controller.isLoading,
-                onTap: () async {
-                  debugPrint('[LoginScreen] Continue with Google tapped');
-                  final success = await controller.loginWithGoogle();
-                  debugPrint(
-                    '[LoginScreen] Google login result: $success | error: ${controller.error}',
-                  );
-                  if (!success) return;
-
-                  final profileCompleted =
-                      controller.lastSocialLoginProfileCompleted ?? true;
-                  if (profileCompleted) {
-                    Get.offAllNamed(AppRoutes.home);
-                  } else {
-                    Get.offAllNamed(AppRoutes.profileDetail);
-                  }
-                },
-              ),
+              _buildSocialLoginRow(controller),
               if (controller.error != null) ...[
                 const SizedBox(height: AppSpacing.md),
                 _buildError(controller.error!),
@@ -209,29 +191,65 @@ class _LoginScreenState extends State<LoginScreen> {
     ).animate().fadeIn(delay: const Duration(milliseconds: 760));
   }
 
-  Widget _buildGoogleButton({
+  Widget _buildSocialLoginRow(AuthController controller) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildSocialIconButton(
+          // Use g_mobiledata_rounded or a custom google SVG if you prefer
+          icon: Icons.g_mobiledata_rounded,
+          isLoading: controller.isLoading,
+          onTap: () async {
+            debugPrint('[LoginScreen] Continue with Google tapped');
+            final success = await controller.loginWithGoogle();
+            debugPrint(
+              '[LoginScreen] Google login result: $success | error: ${controller.error}',
+            );
+            if (!success) return;
+
+            final profileCompleted =
+                controller.lastSocialLoginProfileCompleted ?? true;
+            if (profileCompleted) {
+              Get.offAllNamed(AppRoutes.home);
+            } else {
+              Get.offAllNamed(AppRoutes.profileDetail);
+            }
+          },
+        ),
+        if (GetPlatform.isIOS) ...[
+          const SizedBox(width: AppSpacing.md),
+          _buildSocialIconButton(
+            icon: Icons.apple,
+            isLoading: controller.isLoading,
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Apple sign-in coming soon!')),
+              );
+            },
+          ),
+        ],
+      ],
+    ).animate().fadeIn(delay: const Duration(milliseconds: 800));
+  }
+
+  Widget _buildSocialIconButton({
+    required IconData icon,
     required bool isLoading,
     required VoidCallback onTap,
   }) {
-    return SizedBox(
-      height: 54,
-      child: OutlinedButton.icon(
-        onPressed: isLoading ? null : onTap,
-        icon: const Icon(Icons.g_mobiledata_rounded, size: 28),
-        label: const Text(
-          'Continue with Google',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-        ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textPrimary,
-          side: const BorderSide(color: AppColors.borderSubtle),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          backgroundColor: AppColors.surface,
-        ),
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.borderSubtle),
+        borderRadius: BorderRadius.circular(16),
       ),
-    ).animate().fadeIn(delay: const Duration(milliseconds: 800));
+      child: IconButton(
+        onPressed: isLoading ? null : onTap,
+        icon: Icon(icon, size: 36, color: AppColors.textPrimary),
+      ),
+    );
   }
 
   Widget _buildError(String error) {
